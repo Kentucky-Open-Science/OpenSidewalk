@@ -44,5 +44,7 @@ subprocess.run(['west','build','-p','auto','-b','kg100s_rb4332a','-d',str(build)
 output=project/'firmware'
 output.mkdir(exist_ok=True)
 for ext in ('hex','bin'):
-    shutil.copy2(build/'zephyr'/('zephyr.'+ext),output/('opensidewalk-us915.'+ext))
+    target = output/('opensidewalk-us915.'+ext)
+    shutil.copy2(build/'zephyr'/('zephyr.'+ext),target)
+    target.chmod(0o644)
 print('Firmware:',output)
