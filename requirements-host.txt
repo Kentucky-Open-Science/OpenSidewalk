@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+west>=1.5,<2
+cmake>=3.20
+ninja
+pyserial>=3.5,<4

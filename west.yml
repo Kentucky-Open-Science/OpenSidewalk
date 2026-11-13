@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+manifest:
+  version: '1.2'
+  projects:
+    - name: zephyr
+      url: https://github.com/zephyrproject-rtos/zephyr
+      revision: 41d10b59730406bbab4ca9f1fbbe9e96aafb4966
+      import:
+        name-allowlist: [cmsis, cmsis_6, hal_silabs, loramac-node, segger]
+  self:
+    path: app

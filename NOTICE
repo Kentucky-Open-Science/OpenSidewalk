@@ -1,0 +1,23 @@
+OpenSidewalk
+Copyright 2026 Kentucky Open Science contributors
+
+Independent LoRaWAN firmware for Silicon Labs KG100S development boards.
+Original project code and patches are provided under Apache License 2.0.
+The image also contains third-party software under the licenses described
+in THIRD_PARTY_NOTICES.md and licenses/. Those terms remain applicable.
+
+Zephyr Project contributors; Arm Limited (CMSIS); Silicon Laboratories Inc.;
+Semtech Corporation (LoRaMac-node); Brian Gladman (AES); Lander Casado and
+Philippas Tsigas (CMAC); the Picolibc/Newlib contributors; the Free Software
+Foundation and GCC contributors are credited for their respective components.
+Detailed copyright statements and license conditions accompany this release.
+
+The Zephyr channel-mask and SX126x integration files are modified by this
+project. Each applied patch adds a modification notice to the affected file.
+The DIO3 helper is original project code implementing public hardware register
+semantics documented in Semtech's SX1261/2 datasheet revision 2.2 section 8.6.
+
+Hardware photograph supplied for this project; unique identifiers redacted
+with an image-editing model. Board trademarks belong to their owners.
+Silicon Labs, Semtech, LoRa/LoRaWAN, Amazon Sidewalk and The Things Network
+names identify hardware/protocol compatibility and imply no endorsement.

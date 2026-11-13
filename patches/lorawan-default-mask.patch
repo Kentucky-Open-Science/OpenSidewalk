@@ -1,0 +1,27 @@
+diff --git a/subsys/lorawan/loramac-node/lorawan.c b/subsys/lorawan/loramac-node/lorawan.c
+--- a/subsys/lorawan/loramac-node/lorawan.c
++++ b/subsys/lorawan/loramac-node/lorawan.c
+@@ -2,6 +2,7 @@
+  * Copyright (c) 2020 Manivannan Sadhasivam <mani@kernel.org>
+  *
+  * SPDX-License-Identifier: Apache-2.0
++ * Modified 2026 by Kentucky Open Science contributors: preserve OTAA default mask.
+  */
+ 
+ #include <zephyr/kernel.h>
+@@ -580,7 +581,14 @@
+ 		return -EINVAL;
+ 	}
+ 
+-	/* Notify MAC layer of the requested channel mask. */
++	/* OTAA resets the active mask to the application default before TX. */
++	mib_req.Type = MIB_CHANNELS_DEFAULT_MASK;
++	mib_req.Param.ChannelsDefaultMask = channels_mask;
++	if (LoRaMacMibSetRequestConfirm(&mib_req) != LORAMAC_STATUS_OK) {
++		return -EINVAL;
++	}
++
++	/* Keep the current mask and the next-join default in sync. */
+ 	mib_req.Type = MIB_CHANNELS_MASK;
+ 	mib_req.Param.ChannelsMask = channels_mask;
+ 

@@ -1,0 +1,30 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Standalone application; the factory demo has no MCUboot installation. */
+/ {
+	chosen {
+		zephyr,code-partition = &app_partition;
+	};
+};
+
+&flash0 {
+	partitions {
+		/delete-node/ partition@0;
+		/delete-node/ partition@c000;
+		/delete-node/ partition@82000;
+
+		app_partition: partition@0 {
+			compatible = "zephyr,mapped-partition";
+			label = "application";
+			reg = <0x00000000 0x000f8000>;
+		};
+		/* Existing 32 KiB storage partition at 0xf8000 holds NVS. */
+	};
+};
+
+&button0 {
+	gpios = <&gpioa 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+};
+
+&button1 {
+	gpios = <&gpiod 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+};
