@@ -14,7 +14,12 @@ LOG_MODULE_REGISTER(ble_bridge, LOG_LEVEL_INF);
 static struct ble_event_queue events;
 static struct k_spinlock queue_lock;
 static atomic_t enabled;
-static atomic_t connected_now;
+static atomic_t connected_slots;
+
+static unsigned int connection_count(void)
+{
+	return __builtin_popcount((unsigned int)atomic_get(&connected_slots));
+}
 
 static const struct bt_data advertising[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR),
@@ -30,7 +35,7 @@ K_WORK_DELAYABLE_DEFINE(advertise_work, advertise);
 static void advertise(struct k_work *work)
 {
 	ARG_UNUSED(work);
-	if (!atomic_get(&enabled) || atomic_get(&connected_now)) {
+	if (!atomic_get(&enabled) || connection_count() >= CONFIG_BT_MAX_CONN) {
 		return;
 	}
 	int ret = bt_le_adv_start(BT_LE_ADV_CONN_FAST_1, advertising, ARRAY_SIZE(advertising),
@@ -56,19 +61,25 @@ static void connected(struct bt_conn *conn, uint8_t error)
 	bool queued = ble_event_push(&events, peer->type, peer->a.val);
 
 	k_spin_unlock(&queue_lock, key);
-	atomic_set(&connected_now, 1);
+	atomic_set_bit(&connected_slots, bt_conn_index(conn));
 	bt_addr_le_to_str(peer, address, sizeof(address));
 	if (queued) {
 		LOG_INF("BLE connected %s; TTN event queued", address);
 	} else {
 		LOG_WRN("BLE connected %s; event dropped (queue full/address unsupported)", address);
 	}
+	/* The controller stops this advertising set on every new connection.
+	 * Defer restarting it until after the callback, while slots remain.
+	 */
+	k_work_reschedule(&advertise_work, K_NO_WAIT);
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
-	ARG_UNUSED(conn);
-	atomic_clear(&connected_now);
+	/* An immediate link failure can produce disconnected without a prior
+	 * successful connected callback. Clear only this connection's slot.
+	 */
+	atomic_clear_bit(&connected_slots, bt_conn_index(conn));
 	LOG_INF("BLE disconnected: 0x%02x", reason);
 }
 
@@ -111,9 +122,10 @@ static int cmd_status(const struct shell *sh, size_t argc, char **argv)
 	uint32_t sent = events.sent;
 
 	k_spin_unlock(&queue_lock, key);
-	shell_print(sh, "BLE %s; name: %s; connected: %s; queued: %u/8; sent: %u; dropped: %u",
+	shell_print(sh, "BLE %s; name: %s; connections: %u/%u; queued: %u/8; sent: %u; dropped: %u",
 		    atomic_get(&enabled) ? "enabled" : "disabled", CONFIG_BT_DEVICE_NAME,
-		    atomic_get(&connected_now) ? "yes" : "no", count, sent, dropped);
+		    connection_count(), CONFIG_BT_MAX_CONN,
+		    count, sent, dropped);
 	shell_print(sh, "Connections generate FPort 3 events; 30 seconds between attempts; RAM queue.");
 	return 0;
 }

@@ -20,3 +20,4 @@ with tempfile.TemporaryDirectory(prefix='opensidewalk-rf-') as directory:
 subprocess.run([sys.executable,str(root/'tests/test_control_races.py')],check=True)
 subprocess.run(['node',str(root/'tests/test_codec.cjs')],check=True)
 subprocess.run(['node',str(root/'tests/test_ble_codec.cjs')],check=True)
+subprocess.run([sys.executable,str(root/'tests/test_ble_connections.py')],check=True)

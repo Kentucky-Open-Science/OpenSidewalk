@@ -1,6 +1,6 @@
 {
   "project": "OpenSidewalk",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "release_date": "2026-11-13",
   "board": "kg100s_rb4332a",
   "frequency_plan": "US_902_928_FSB_2",
@@ -10,18 +10,18 @@
   "gcc_version": "14.3.0",
   "project_license": "Apache-2.0",
   "third_party_notices": "../THIRD_PARTY_NOTICES.md",
-  "application_flash_bytes": 284432,
-  "ram_bytes": 44080,
+  "application_flash_bytes": 284852,
+  "ram_bytes": 46448,
   "image_min_address": "0x00000000",
-  "image_max_address": "0x0004570f",
+  "image_max_address": "0x000458b3",
   "nvs_start": "0x000f8000",
   "contains_credentials": false,
   "includes_nvs_or_userdata": false,
   "sha256": {
-    "opensidewalk-us915.hex": "53e8084454f20d237bb82e09dc05b47b874742f8f209d905bd33f6fc1e40bb07",
-    "opensidewalk-us915.bin": "022bf42a1c1fa75f6b44dc8bb32dbc1d9b83da9fe10ffa8dcbae206bd7f72d71"
+    "opensidewalk-us915.hex": "06d517bb06dc6b8b31a3f219a22c1ed682656926585f813e7147a72387086c05",
+    "opensidewalk-us915.bin": "4229c8f1236d0340bd72aacdb9d579781e83239d447e3e8a2e198f244536736a"
   },
   "ble_connection_events_fport": 3,
   "ble_name": "OpenSidewalk",
-  "ble_max_connections": 1
+  "ble_max_connections": 4
 }

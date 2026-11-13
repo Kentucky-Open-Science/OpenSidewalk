@@ -11,7 +11,8 @@ the configured LoRaWAN device. This allows testing from a BLE scanner app
 without a custom iPhone app. Reading arbitrary existing sensor profiles would
 require sensor-specific client code and is outside this first version.
 
-One client is supported at a time. Advertising resumes after disconnect.
+As requested in v0.4.1, four clients are supported simultaneously. Advertising
+continues while capacity remains and resumes when a connection slot is recycled.
 The peer's BLE address is the identifier; a private address is not a persistent
 device identity and the phone's friendly name is not automatically available.
 

@@ -102,7 +102,7 @@ static int cmd_status(const struct shell *sh, size_t argc, char **argv)
 	ARG_UNUSED(argv);
 	bin2hex(copy.dev_eui, sizeof(copy.dev_eui), dev_eui, sizeof(dev_eui));
 	bin2hex(copy.join_eui, sizeof(copy.join_eui), join_eui, sizeof(join_eui));
-	shell_print(sh, "KG100S BLE/LoRaWAN bridge v0.4.0; Zephyr 4.5.0");
+	shell_print(sh, "KG100S BLE/LoRaWAN bridge v0.4.1; Zephyr 4.5.0");
 	shell_print(sh, "Radio/stack: %s; joined: %s; busy: %s",
 		    atomic_get(&ready) ? "ready" : "not ready",
 		    atomic_get(&joined) ? "yes" : "no", atomic_get(&busy) ? "yes" : "no");
@@ -392,7 +392,7 @@ int main(void)
 	int ret;
 
 
-	LOG_INF("KG100S BLE/LoRaWAN bridge v0.4.0; US915; automatic OTAA");
+	LOG_INF("KG100S BLE/LoRaWAN bridge v0.4.1; US915; automatic OTAA");
 	if (!device_is_ready(radio)) {
 		LOG_ERR("Integrated SX1262 is not ready");
 		return -ENODEV;

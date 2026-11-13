@@ -46,8 +46,10 @@ The pictured BRD8042A expansion adapter/external shield is not used.
 3. In this TTN device's **Live data**, look for an FPort **3** uplink decoded as
    `event: "connected"`, with `ble_address`, `ble_address_type`, and `sequence`.
    Install the updated `decoder.js` as the device's custom uplink formatter.
-4. Disconnect in the phone app to allow another device to connect. One BLE
-   client is supported at a time. Reconnecting generates another event.
+4. Up to **four BLE devices can remain connected at the same time**. Each
+   connection queues its own event, identified by that peer's BLE address.
+   The board keeps advertising while slots remain, and resumes after a slot
+   is freed. Reconnecting generates another event.
 
 This version forwards **connection events**, not arbitrary Bluetooth streams.
 The peer address identifies the connection; iPhones can rotate private BLE
@@ -59,7 +61,9 @@ Events use unconfirmed LoRaWAN uplinks and are best effort. Up to eight events
 wait in RAM while unjoined or while radio retries are pending. A full queue
 drops the newest event and increments the drop counter. Reset discards queued
 events. Attempts are spaced by 30 seconds; retries retain the head event.
-`ble status` reports connection state, queued, locally sent and dropped counts.
+`ble status` reports active connections (for example `2/4`), queued, locally
+sent and dropped counts. A burst of four events is forwarded in order, with
+30 seconds between event attempts; this can take over 90 seconds to drain.
 Locally sent does not mean TTN acknowledged receipt.
 
 FPort 3 is 11 bytes: schema **1**, event **1** (`connected`), big-endian

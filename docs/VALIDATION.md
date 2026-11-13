@@ -1,4 +1,39 @@
-# Release validation — v0.4.0
+# Release validation — v0.4.1
+
+Validated November 13, 2026 on KG100S BRD4332A / BRD4002A.
+
+- Pinned build: PASS. Four host/controller connections, 12,288-byte controller
+  buffer; FLASH 284,852 bytes, RAM 46,448 bytes (47.25% of available RAM).
+- Image integrity: HEX checksums and BIN agreement PASS; all application records
+  below NVS at `0x000f8000`, with no NVS or USERDATA records.
+- Full host suite: PASS. Actual bridge callbacks exercise four distinct peers,
+  advertising below/at capacity, recycled-slot reuse, independent TTN events,
+  and rapid failed-establishment/disconnect while other peers remain connected.
+- Independent review found the failed-establishment counting edge case. The
+  regression failed with a decrement-only counter and passed with per-slot
+  tracking. The full suite passed after the correction.
+- Application flash/verify PASS without mass erase. Existing TTN profile was
+  retained, a fresh monotonic nonce reserved, and automatic OTAA accepted.
+- Real Mac connection and GATT read PASS. A fresh BLE scan observed 61
+  advertisements from the board while the Mac remained connected.
+- Simultaneous physical devices: the user's iPhone and the Mac were connected
+  together. Serial status repeatedly reported **2/4** active peers, with their
+  separate events queued and transmitted in order on FPort 3.
+- TTN live data confirmed decoded connection events from both distinct peer
+  addresses (sequences 3 and 4). Queue drained with **0** dropped events.
+- Disconnecting the Mac left the phone connected (**1/4**) and advertising
+  resumed/continued for the remaining slots. The phone was not disconnected by
+  the validation tool.
+
+Four simultaneous peers are covered by host callback tests and configured in
+real firmware; the physical test used two centrals. Eight-event RAM queue,
+30-second event attempt spacing, unconfirmed uplinks, rotating private BLE
+addresses, and connection-event-only behavior remain as documented. Actual
+four-central RF stress testing and a real gateway-outage retry remain untested.
+No phone or hardware identifiers are included in this public record.
+
+## Earlier v0.4.0 validation
+
 
 Validated November 13, 2026 on KG100S BRD4332A / BRD4002A.
 
