@@ -2,8 +2,24 @@
 // KG100S telemetry schema 1, application port 2, 10-byte big-endian payload.
 function decodeUplink(input) {
   var b = input.bytes;
+  if (input.fPort === 3) {
+    if (b.length !== 11 || b[0] !== 1 || b[1] !== 1 || b[4] > 1) {
+      return {errors: ["Invalid KG100S BLE connection event"]};
+    }
+    var address = [];
+    for (var i = 5; i < 11; i++) {
+      address.push(('0' + b[i].toString(16)).slice(-2).toUpperCase());
+    }
+    return {data: {
+      schema_version: 1,
+      event: "connected",
+      sequence: (b[2] << 8) | b[3],
+      ble_address: address.join(':'),
+      ble_address_type: b[4] === 0 ? "public" : "random"
+    }, warnings: [], errors: []};
+  }
   if (input.fPort !== 2) {
-    return {errors: ["KG100S telemetry uses FPort 2"]};
+    return {errors: ["KG100S uses FPort 2 for telemetry and FPort 3 for BLE events"]};
   }
   if (b.length !== 10) {
     return {errors: ["KG100S telemetry requires exactly 10 bytes"]};

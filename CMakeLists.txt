@@ -3,4 +3,5 @@ cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(kg100s_lorawan)
 zephyr_include_directories(src)
-target_sources(app PRIVATE src/main.c src/telemetry.c src/telemetry_packet.c src/join_policy.c)
+target_sources(app PRIVATE src/main.c src/telemetry.c src/telemetry_packet.c src/join_policy.c
+                          src/ble_event.c src/ble_bridge.c)

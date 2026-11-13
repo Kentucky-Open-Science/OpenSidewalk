@@ -12,6 +12,7 @@
 #include <zephyr/logging/log.h>
 #include "telemetry.h"
 #include "join_policy.h"
+#include "ble_bridge.h"
 
 LOG_MODULE_REGISTER(kg100s_lorawan, LOG_LEVEL_INF);
 
@@ -36,6 +37,7 @@ static int64_t next_periodic;
 static int64_t telemetry_not_before;
 static int64_t next_join;
 static unsigned int join_failures;
+static int64_t next_ble_attempt;
 static atomic_t join_delay_seconds = ATOMIC_INIT(JOIN_BOOT_DELAY_MS / 1000);
 K_MUTEX_DEFINE(config_lock);
 
@@ -100,7 +102,7 @@ static int cmd_status(const struct shell *sh, size_t argc, char **argv)
 	ARG_UNUSED(argv);
 	bin2hex(copy.dev_eui, sizeof(copy.dev_eui), dev_eui, sizeof(dev_eui));
 	bin2hex(copy.join_eui, sizeof(copy.join_eui), join_eui, sizeof(join_eui));
-	shell_print(sh, "KG100S LoRaWAN telemetry v0.3.1; Zephyr 4.5.0");
+	shell_print(sh, "KG100S BLE/LoRaWAN bridge v0.4.0; Zephyr 4.5.0");
 	shell_print(sh, "Radio/stack: %s; joined: %s; busy: %s",
 		    atomic_get(&ready) ? "ready" : "not ready",
 		    atomic_get(&joined) ? "yes" : "no", atomic_get(&busy) ? "yes" : "no");
@@ -390,7 +392,7 @@ int main(void)
 	int ret;
 
 
-	LOG_INF("KG100S LoRaWAN telemetry v0.3.1; US915; automatic OTAA");
+	LOG_INF("KG100S BLE/LoRaWAN bridge v0.4.0; US915; automatic OTAA");
 	if (!device_is_ready(radio)) {
 		LOG_ERR("Integrated SX1262 is not ready");
 		return -ENODEV;
@@ -420,6 +422,10 @@ int main(void)
 	lorawan_register_downlink_callback(&callback);
 	lorawan_enable_adr(true);
 	atomic_set(&ready, 1);
+	ret = ble_bridge_init();
+	if (ret) {
+		LOG_ERR("Bluetooth initialization failed: %d; LoRaWAN remains available", ret);
+	}
 	next_join = k_uptime_get() + JOIN_BOOT_DELAY_MS;
 	LOG_INF("SX1262 and LoRaWAN ready; automatic join in 3 seconds when provisioned.");
 
@@ -451,6 +457,24 @@ int main(void)
 		    (telemetry_pending() || k_uptime_get() >= next_periodic) &&
 		    atomic_cas(&busy, 0, 1)) {
 			send_telemetry();
+			atomic_clear(&busy);
+		}
+		uint8_t ble_payload[BLE_EVENT_SIZE];
+
+		if (atomic_get(&joined) && k_uptime_get() >= next_ble_attempt &&
+		    ble_bridge_pending(ble_payload) && atomic_cas(&busy, 0, 1)) {
+			/* The stack can flush pending MAC commands and return -EAGAIN.
+			 * Keep our event queued in that case rather than blocking the flush.
+			 */
+			ret = lorawan_send(3, ble_payload, sizeof(ble_payload), LORAWAN_MSG_UNCONFIRMED);
+			ble_bridge_complete(ret == 0);
+			next_ble_attempt = k_uptime_get() + 30000;
+			if (ret) {
+				LOG_WRN("BLE event uplink failed: %d; retained for retry", ret);
+			} else {
+				LOG_INF("BLE connected event sent on FPort 3, sequence %u",
+					(ble_payload[2] << 8) | ble_payload[3]);
+			}
 			atomic_clear(&busy);
 		}
 	}

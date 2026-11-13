@@ -1,7 +1,8 @@
 # OpenSidewalk
 
-**Independent LoRaWAN firmware for the Silicon Labs KG100S Sidewalk development kit.**
-Automatic OTAA joining, MCU temperature, two buttons, and a ready-to-use TTN decoder.
+**Independent BLE and LoRaWAN firmware for the Silicon Labs KG100S development kit.**
+BLE connection events, automatic OTAA joining, MCU temperature, two buttons,
+and a ready-to-use TTN decoder.
 Project code is licensed under **Apache-2.0**; third-party licenses are retained.
 
 ![KG100S development kit with identifiers redacted](docs/device-redacted.png)
@@ -21,6 +22,8 @@ integrated SX1262 radio. The photograph is not a pinout reference.*
 - Stores credentials and monotonically reserved DevNonce in NVS; every reboot
   performs a fresh join. Storage errors and nonce exhaustion stop auto-joins.
 - USB serial shell, larger ASCII boot banner, optional controller LCD nickname.
+- Advertises as **OpenSidewalk** over BLE; each successful connection queues a
+  `connected` event for TTN on FPort **3**, under the existing LoRaWAN identity.
 
 OpenSidewalk is a replacement application built on Zephyr/LoRaMac-node. It does
 not implement Amazon Sidewalk or connect to AWS. It is not affiliated with or
@@ -31,6 +34,37 @@ endorsed by Amazon, Silicon Labs, Semtech or The Things Network.
 Tested with KG100S **BRD4332A**, EFR32BG21B010F1024IM32, on the **BRD4002A**
 Wireless Pro Kit mainboard. The built-in SX1262 uses its 915 MHz antenna.
 The pictured BRD8042A expansion adapter/external shield is not used.
+
+## Connect an iPhone over BLE
+
+1. Power the provisioned board with its 915 MHz antenna attached. It joins TTN
+   automatically and advertises as **OpenSidewalk**.
+2. Open a BLE scanner app such as **nRF Connect for Mobile** on your iPhone,
+   allow Bluetooth access, scan, and tap **Connect** on **OpenSidewalk**.
+   Use the BLE app to establish the connection; no custom phone app or pairing
+   setup is required for this prototype.
+3. In this TTN device's **Live data**, look for an FPort **3** uplink decoded as
+   `event: "connected"`, with `ble_address`, `ble_address_type`, and `sequence`.
+   Install the updated `decoder.js` as the device's custom uplink formatter.
+4. Disconnect in the phone app to allow another device to connect. One BLE
+   client is supported at a time. Reconnecting generates another event.
+
+This version forwards **connection events**, not arbitrary Bluetooth streams.
+The peer address identifies the connection; iPhones can rotate private BLE
+addresses, so it is not a permanent phone ID. The peer's friendly name is not
+automatically available. A generic BLE sensor that cannot initiate connections
+would need a separate sensor-specific client implementation on the KG100S.
+
+Events use unconfirmed LoRaWAN uplinks and are best effort. Up to eight events
+wait in RAM while unjoined or while radio retries are pending. A full queue
+drops the newest event and increments the drop counter. Reset discards queued
+events. Attempts are spaced by 30 seconds; retries retain the head event.
+`ble status` reports connection state, queued, locally sent and dropped counts.
+Locally sent does not mean TTN acknowledged receipt.
+
+FPort 3 is 11 bytes: schema **1**, event **1** (`connected`), big-endian
+16-bit sequence, address type (**0** public / **1** random), six address bytes
+in display order. Sequence starts at 1 each boot and wraps after 65535.
 
 **Connect the correct antenna before powering a provisioned board.** It transmits
 automatically. This is an experimental prototype, not a certified LoRaWAN product.
@@ -162,6 +196,7 @@ python3 -m venv .venv
 python -m pip install -r app/requirements-host.txt
 west init -l app
 west update
+west blobs fetch hal_silabs
 python -m pip install -r zephyr/scripts/requirements-base.txt
 west zephyr-export
 # Install Zephyr SDK 1.0.1 from its official release, or use west sdk install.
@@ -170,7 +205,9 @@ python app/tests/run_tests.py
 python app/tools/check_public_release.py
 ```
 
-`west.yml` pins Zephyr v4.5.0 and imports only the needed module set. The build
+`west.yml` pins Zephyr v4.5.0 and imports only the needed module set, including
+Mbed TLS / TF-PSA for Bluetooth controller support. Silicon Labs controller
+and RAIL libraries are fetched with `west blobs fetch hal_silabs`. The build
 script verifies the Zephyr commit and applies the two tracked patches, or checks
 that they are already applied. It stages the application outside paths containing
 spaces and produces `firmware/opensidewalk-us915.hex` and `.bin`.

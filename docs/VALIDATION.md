@@ -1,4 +1,35 @@
-# Release validation — v0.3.1
+# Release validation — v0.4.0
+
+Validated November 13, 2026 on KG100S BRD4332A / BRD4002A.
+
+- Host suite: PASS for BLE event framing, C/JavaScript interoperability, address
+  ordering/type, FIFO overflow, retry retention, sequence wrap, invalid frames,
+  and all existing telemetry, join scheduling, race and RF-switch tests.
+- Combined BLE/LoRaWAN build: PASS with pinned Zephyr / SDK. FLASH 284,432 bytes,
+  RAM 44,080 bytes. Final image numbers are recorded in `firmware/manifest.json`.
+- HEX checksums/BIN agreement and image boundary: PASS. Application image is
+  below NVS at `0x000f8000`; no NVS or USERDATA records are flashed.
+- Hardware: flash/verify PASS without mass erase; saved LoRaWAN identity and
+  profile retained, next nonce reserved and automatic OTAA accepted.
+- Mac BLE test: advertising as OpenSidewalk, connection and Device Information
+  GATT model read PASS while LoRaWAN remained active.
+- End-to-end reception: TTN received and decoded a real FPort 3 connection event
+  at 14:02:37 America/Louisville. Existing FPort 2 telemetry also decoded.
+- Disconnect/reconnect: advertising resumed and two further real connections
+  were accepted. Both subsequent events were sent in order; the third waited
+  behind the 30-second event-attempt interval. No events were dropped.
+- Updated this device's TTN formatter, tested its FPort 3 fixture, and verified
+  decoded fields from a real gateway uplink.
+
+The actual iPhone connection remains a user test; the completed end-to-end test
+used a Mac central. Full queue and TX-failure retention are host-tested, not
+induced with a real gateway outage. This is an unpaired, single-client prototype:
+connection events are best effort, pending RAM events do not survive reboot,
+and private BLE addresses are not persistent identities. It does not forward
+arbitrary Bluetooth data. No phone or hardware identities are included here.
+
+## Earlier v0.3.1 validation
+
 
 Validated November 13, 2026 on a KG100S BRD4332A / BRD4002A mainboard.
 Device identities, keys, gateway details and raw logs are deliberately omitted.

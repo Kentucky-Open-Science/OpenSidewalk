@@ -6,6 +6,7 @@ manifest:
       url: https://github.com/zephyrproject-rtos/zephyr
       revision: 41d10b59730406bbab4ca9f1fbbe9e96aafb4966
       import:
-        name-allowlist: [cmsis, cmsis_6, hal_silabs, loramac-node, segger]
+        name-allowlist: [cmsis, cmsis_6, hal_silabs, loramac-node, segger,
+                         mbedtls, tf-psa-crypto, tf-psa-crypto-drivers]
   self:
     path: app
